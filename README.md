@@ -1,6 +1,6 @@
 # bundesappv1
 
-A new Flutter application.
+Json requests and parse with flutter
 
 ## Getting Started
 
