@@ -1,52 +1,73 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-Future<Time> fetchTime() async {
-  final response = await http.get('https://www.parsehub.com/api/v2/runs/tkL_dZT-n8jT/data?api_key=tau1-4-7WTCX');
-  final responseJson = json.decode(response.body);
-
-  return Time.fromJson(responseJson);
-}
-
-class Time{
-  final String Nome;
-  /*final String Nome;
-  final int pontos;
-  final int vitorias;
-  final int empates;
-  final int derrotas;
-  final int gols_marcados;
-  final int gols_sofridos;
-  final int aproveitamento;
-*/
-  Time({this.Nome});
-
-  factory Time.fromJson(Map<String, dynamic> json) {
-    return Time(
-      Nome: json['classificacao[Barcelona]']
-    );
-  }
-
-}
-/*class Album {
-  final int userId;
-  final int id;
-  final String title;
-
-  Album({this.userId, this.id, this.title});
-
-  factory Album.fromJson(Map<String, dynamic> json) {
-    return Album(
-      userId: json['userId'],
-      id: json['id'],
-      title: json['title'],
-    );
+Future<Classificacao> fetchClassificacao() async {
+  final response = await http.get(
+      'https://www.parsehub.com/api/v2/runs/tLTJeXqG80HC/data?api_key=tau1-4-7WTCX');
+  if (response.statusCode == 200) {
+    // If the server did return a 200 OK response, then parse the JSON.
+    return Classificacao.fromJson(json.decode(response.body));
+  } else {
+    // If the server did not return a 200 OK response, then throw an exception.
+    throw Exception('Deu ruim');
   }
 }
-*/
+
+class Classificacao {
+  List<Clube> clube;
+
+  Classificacao({this.clube});
+
+  Classificacao.fromJson(Map<String, dynamic> json) {
+    if (json['Clube'] != null) {
+      clube = new List<Clube>();
+      json['Clube'].forEach((v) {
+        clube.add(new Clube.fromJson(v));
+      });
+    }
+  }
+}
+
+class Clube {
+  String posicao;
+  String logoUrl;
+  String time;
+  String pontos;
+  String vitorias;
+  String empates;
+  String derrotas;
+  String golsmarcados;
+  String golsofridos;
+  String aproveitamento;
+
+  Clube({this.posicao,
+    this.logoUrl,
+    this.time,
+    this.pontos,
+    this.vitorias,
+    this.empates,
+    this.derrotas,
+    this.golsmarcados,
+    this.golsofridos,
+    this.aproveitamento});
+
+  Clube.fromJson(Map<String, dynamic> json) {
+    posicao = json['posicao'];
+    logoUrl = json['logo_url'];
+    time = json['time'];
+    pontos = json['pontos'];
+    vitorias = json['vitorias'];
+    empates = json['empates'];
+    derrotas = json['derrotas'];
+    golsmarcados = json['golsmarcados'];
+    golsofridos = json['golsofridos'];
+    aproveitamento = json['aproveitamento'];
+  }
+}
+
 void main() => runApp(MyApp());
 
 class MyApp extends StatefulWidget {
@@ -57,12 +78,12 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  Future<Time> futureTime;
+  Future<Classificacao> futureClassificacao;
 
   @override
   void initState() {
     super.initState();
-    futureTime = fetchTime();
+    futureClassificacao = fetchClassificacao();
   }
 
   @override
@@ -77,11 +98,11 @@ class _MyAppState extends State<MyApp> {
           title: Text('Tentativa de request'),
         ),
         body: Center(
-          child: FutureBuilder<Time>(
-            future: futureTime,
+          child: FutureBuilder<Classificacao>(
             builder: (context, snapshot) {
               if (snapshot.hasData) {
-                return Text(snapshot.data.Nome);
+                return Text(snapshot.data.clube.first.time);
+                //Mostrando dados do primeiro colocado
               } else if (snapshot.hasError) {
                 return Text("${snapshot.error}");
               }
@@ -89,6 +110,7 @@ class _MyAppState extends State<MyApp> {
               // By default, show a loading spinner.
               return CircularProgressIndicator();
             },
+            future: futureClassificacao,
           ),
         ),
       ),
